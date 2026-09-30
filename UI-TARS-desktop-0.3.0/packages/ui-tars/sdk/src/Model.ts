@@ -37,9 +37,13 @@ type OpenAIChatCompletionCreateParams = Omit<ClientOptions, 'maxRetries'> &
     'model' | 'max_tokens' | 'temperature' | 'top_p'
   >;
 
+const configuredRequestTimeoutMs =
+  typeof process !== 'undefined'
+    ? process.env?.UI_TARS_REQUEST_TIMEOUT_MS
+    : undefined;
 const MODEL_REQUEST_TIMEOUT_MS = Math.max(
   1000,
-  Number(process.env.UI_TARS_REQUEST_TIMEOUT_MS || 120000),
+  Number(configuredRequestTimeoutMs || 120000),
 );
 
 export interface UITarsModelConfig extends OpenAIChatCompletionCreateParams {
