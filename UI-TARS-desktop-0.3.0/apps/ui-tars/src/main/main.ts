@@ -33,8 +33,16 @@ import { checkBrowserAvailability } from './services/browserCheck';
 
 const { isProd } = env;
 
+const userDataDir = process.env.UI_TARS_USER_DATA_DIR;
+if (userDataDir) {
+  app.setPath('userData', userDataDir);
+}
+
 // 在应用初始化之前启用辅助功能支持
 app.commandLine.appendSwitch('force-renderer-accessibility');
+// Keep hardware acceleration enabled while avoiding a separate GPU process on
+// Windows systems where that child process cannot start.
+app.commandLine.appendSwitch('in-process-gpu');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (squirrelStartup) {
@@ -58,8 +66,19 @@ const loadDevDebugTools = async () => {
 
   import('electron-devtools-installer')
     .then(({ default: installExtensionDefault, REACT_DEVELOPER_TOOLS }) => {
-      // @ts-ignore
-      const installExtension = installExtensionDefault?.default;
+      const candidate = installExtensionDefault as unknown as
+        | ((extension: typeof REACT_DEVELOPER_TOOLS) => Promise<string>)
+        | {
+            default?: (
+              extension: typeof REACT_DEVELOPER_TOOLS,
+            ) => Promise<string>;
+          };
+      const installExtension =
+        typeof candidate === 'function' ? candidate : candidate.default;
+      if (typeof installExtension !== 'function') {
+        logger.warn('electron-devtools-installer is unavailable; skipping extension install');
+        return;
+      }
       const extensions = [installExtension(REACT_DEVELOPER_TOOLS)];
 
       return Promise.all(extensions)
