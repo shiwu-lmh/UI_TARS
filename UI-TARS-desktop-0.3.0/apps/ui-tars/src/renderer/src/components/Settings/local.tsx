@@ -18,17 +18,22 @@ interface LocalSettingsDialogProps {
 }
 
 export const checkVLMSettings = async () => {
-  const settingRpc = window.electron.setting;
+  try {
+    const settingRpc = window.electron.setting;
+    const currentSetting = await Promise.race([
+      settingRpc.getSetting(),
+      new Promise<null>((_, reject) => {
+        setTimeout(() => reject(new Error('读取 VLM 设置超时')), 3000);
+      }),
+    ]);
+    const { vlmApiKey, vlmBaseUrl, vlmModelName, vlmProvider } =
+      (currentSetting || {}) as Partial<LocalStore>;
 
-  const currentSetting = ((await settingRpc.getSetting()) ||
-    {}) as Partial<LocalStore>;
-  const { vlmApiKey, vlmBaseUrl, vlmModelName, vlmProvider } = currentSetting;
-
-  if (vlmApiKey && vlmBaseUrl && vlmModelName && vlmProvider) {
-    return true;
+    return Boolean(vlmApiKey && vlmBaseUrl && vlmModelName && vlmProvider);
+  } catch (error) {
+    console.error('Failed to read VLM settings:', error);
+    return false;
   }
-
-  return false;
 };
 
 export const LocalSettingsDialog = ({
