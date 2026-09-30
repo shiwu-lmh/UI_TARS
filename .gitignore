@@ -1,0 +1,27 @@
+# Local secrets and configuration
+ocr_config.local.json
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python local files
+__pycache__/
+*.py[cod]
+.venv/
+.idea/
+
+# Node and build artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+out/
+**/out/
+.pnpm-store/
+.turbo/
+coverage/
+test-results/
+*.log
+*.log.*
